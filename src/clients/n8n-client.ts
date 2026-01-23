@@ -2,16 +2,12 @@
  * @module clients/n8n-client
  * @description N8n API client with modular architecture
  *
- * Composes domain-specific API modules:
- * - workflows: Workflow CRUD and activation
- * - webhooks: Webhook execution
- * - executions: Execution management
- * - tags: Tag management
- * - users: User management
- * - projects: Project management (Enterprise)
- * - variables: Variable management (Enterprise)
- * - credentials: Credential management
- * - audit: Security audit
+ * @ai-rule Adding new module:
+ * 1. Create `modules/<name>-api.ts` (copy from existing, e.g. tag-api.ts)
+ * 2. Export from `modules/index.ts`
+ * 3. Add property + init here (this file)
+ * 4. Create handler in `handlers/<name>-handlers.ts`
+ * 5. NO facade methods - handlers use `client.<module>.<method>()` directly
  */
 
 import { HttpClient, type HttpClientConfig } from './base/http-client.js';
