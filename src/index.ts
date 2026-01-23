@@ -3,6 +3,7 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import { ListToolsRequestSchema, CallToolRequestSchema } from "@modelcontextprotocol/sdk/types.js";
 import { z } from "zod";
 import fetch from 'node-fetch';
+import { PATTERN_TOOLS, handlePatternTool } from './workflow-patterns.js';
 
 // Type definitions for n8n API responses
 interface N8nUser {
@@ -845,7 +846,9 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           },
           required: ["clientId"]
         }
-      }
+      },
+      // Zie619 Workflow Pattern Tools
+      ...PATTERN_TOOLS
     ]
   };
 });
@@ -1954,6 +1957,14 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         };
       }
     }
+
+    // Zie619 Workflow Pattern Tools
+    case "n8n-patterns-stats":
+    case "n8n-patterns-search":
+    case "n8n-patterns-get":
+    case "n8n-patterns-categories":
+    case "n8n-patterns-integrations":
+      return handlePatternTool(name, args as Record<string, unknown>);
 
     default:
       return {
