@@ -3,26 +3,167 @@
  * @description Handlers for n8n credential operations
  *
  * Provides handlers for:
+ * - listCredentialsInUse: List credentials used across all workflows
  * - createCredential: Create a new credential
  * - deleteCredential: Delete a credential by ID
  * - getCredentialSchema: Get schema for a credential type
  */
 
 import {
+  N8nLoginSchema,
+  ListCredentialsInUseSchema,
+  ListCredentialsSchema,
   CreateCredentialSchema,
   DeleteCredentialSchema,
   GetCredentialSchemaSchema,
 } from '../schemas/tool-inputs.js';
-import { createSuccessResponse } from '../types/mcp.js';
+import { createSuccessResponse, createCrudResponse } from '../types/mcp.js';
 import {
   createClientHandler,
   globalRegistry,
   type WrappedHandler,
+  type HandlerRegistry,
 } from './registry.js';
+import type { N8nWorkflow } from '../types/n8n.js';
+
+// =============================================================================
+// Types
+// =============================================================================
+
+interface CredentialReference {
+  id: string;
+  name: string;
+  type: string;
+  usedInWorkflows: Array<{ id: string; name: string; nodeName: string }>;
+}
+
+// =============================================================================
+// Auth Handlers (REST API)
+// =============================================================================
+
+/**
+ * Login to n8n and get session cookie
+ *
+ * Required for REST API operations like listing all credentials.
+ * Returns session cookie to use with subsequent REST API calls.
+ *
+ * @param input.email - n8n user email
+ * @param input.password - n8n user password
+ * @returns Session cookie string
+ */
+export const n8nLogin: WrappedHandler = createClientHandler(
+  N8nLoginSchema,
+  async (input, client) => {
+    const sessionCookie = await client.login(input.email, input.password);
+
+    return createSuccessResponse({
+      message: 'Login successful',
+      sessionCookie,
+      note: 'Use this sessionCookie with list-credentials and other REST API tools',
+    });
+  }
+);
 
 // =============================================================================
 // Credential Handlers
 // =============================================================================
+
+/**
+ * List all credentials via REST API
+ *
+ * Requires session cookie from n8n-login.
+ * Returns full credential list with details.
+ *
+ * @param input.sessionCookie - Session cookie from n8n-login
+ * @param input.includeScopes - Include credential scopes (default: true)
+ * @returns List of all credentials
+ */
+export const listCredentials: WrappedHandler = createClientHandler(
+  ListCredentialsSchema,
+  async (input, client) => {
+    const credentials = await client.credentials.listAll(input.sessionCookie, {
+      includeScopes: input.includeScopes,
+    });
+
+    return createSuccessResponse({
+      total: credentials.length,
+      credentials,
+    });
+  }
+);
+
+/**
+ * List all credentials used across workflows
+ *
+ * Since n8n Public API doesn't support GET /credentials,
+ * this extracts credential references from all workflows.
+ *
+ * @param input.type - Optional filter by credential type
+ * @returns List of credentials with usage info
+ */
+export const listCredentialsInUse: WrappedHandler = createClientHandler(
+  ListCredentialsInUseSchema,
+  async (input, client) => {
+    // Get all workflows
+    const workflowsResponse = await client.workflows.list();
+    const workflows = workflowsResponse.data || [];
+
+    // Extract credentials from all workflows
+    const credentialMap = new Map<string, CredentialReference>();
+
+    for (const workflowSummary of workflows) {
+      // Get full workflow to access nodes
+      const workflow = (await client.workflows.get(
+        String(workflowSummary.id)
+      )) as N8nWorkflow;
+
+      if (!workflow.nodes) continue;
+
+      for (const node of workflow.nodes) {
+        if (!node.credentials) continue;
+
+        for (const [credType, credRef] of Object.entries(node.credentials)) {
+          const cred = credRef as { id: string; name: string };
+          if (!cred.id) continue;
+
+          // Filter by type if specified
+          if (input.type && credType !== input.type) continue;
+
+          const key = cred.id;
+          if (!credentialMap.has(key)) {
+            credentialMap.set(key, {
+              id: cred.id,
+              name: cred.name,
+              type: credType,
+              usedInWorkflows: [],
+            });
+          }
+
+          const existing = credentialMap.get(key)!;
+          // Check if this workflow+node combo already exists
+          const alreadyAdded = existing.usedInWorkflows.some(
+            (w) =>
+              w.id === String(workflow.id) && w.nodeName === node.name
+          );
+          if (!alreadyAdded) {
+            existing.usedInWorkflows.push({
+              id: String(workflow.id),
+              name: workflow.name,
+              nodeName: node.name,
+            });
+          }
+        }
+      }
+    }
+
+    const credentials = Array.from(credentialMap.values());
+
+    return createSuccessResponse({
+      total: credentials.length,
+      credentials,
+    });
+  }
+);
 
 /**
  * Create a new credential
@@ -41,9 +182,7 @@ export const createCredential: WrappedHandler = createClientHandler(
       input.data as Parameters<typeof client.credentials.create>[2]
     );
 
-    return createSuccessResponse(
-      `Successfully created credential:\n${JSON.stringify(credential, null, 2)}`
-    );
+    return createCrudResponse('created', 'credential', credential);
   }
 );
 
@@ -58,9 +197,7 @@ export const deleteCredential: WrappedHandler = createClientHandler(
   async (input, client) => {
     const credential = await client.credentials.delete(input.id);
 
-    return createSuccessResponse(
-      `Successfully deleted credential:\n${JSON.stringify(credential, null, 2)}`
-    );
+    return createCrudResponse('deleted', 'credential', credential);
   }
 );
 
@@ -75,17 +212,13 @@ export const getCredentialSchema: WrappedHandler = createClientHandler(
   async (input, client) => {
     const schema = await client.credentials.getSchema(input.credentialTypeName);
 
-    return createSuccessResponse(
-      `Schema for credential type "${input.credentialTypeName}":\n${JSON.stringify(schema, null, 2)}`
-    );
+    return createSuccessResponse(schema);
   }
 );
 
 // =============================================================================
 // Registration
 // =============================================================================
-
-import type { HandlerRegistry } from './registry.js';
 
 /**
  * Register all credential handlers with a registry
@@ -95,6 +228,12 @@ import type { HandlerRegistry } from './registry.js';
 export function registerCredentialHandlers(
   registry: HandlerRegistry = globalRegistry
 ): void {
+  // Auth (REST API)
+  registry.register('n8n-login', n8nLogin);
+
+  // Credentials
+  registry.register('list-credentials', listCredentials);
+  registry.register('list-credentials-in-use', listCredentialsInUse);
   registry.register('create-credential', createCredential);
   registry.register('delete-credential', deleteCredential);
   registry.register('get-credential-schema', getCredentialSchema);

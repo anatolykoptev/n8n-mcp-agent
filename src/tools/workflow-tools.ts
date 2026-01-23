@@ -167,3 +167,44 @@ export const workflowTools: McpToolDefinition[] = [
     },
   },
 ];
+
+// =============================================================================
+// Test Workflow Tool
+// =============================================================================
+
+export const testWorkflowTool: McpToolDefinition = {
+  name: 'test-workflow',
+  description: `Universal workflow testing tool. Automatically detects trigger type and uses appropriate testing method:
+- Webhook trigger → direct webhook call
+- Execute Sub-workflow Trigger → via Test Runner workflow
+- Manual/Schedule Trigger → use autoConvert:true to add Execute Sub-workflow Trigger
+
+Returns structured response with execution results and AI-friendly diagnosis for errors. ${JSON_NOTE}`,
+  inputSchema: {
+    type: 'object',
+    properties: {
+      ...clientIdProperty(),
+      workflowId: {
+        type: 'string',
+        description: 'Workflow ID to test',
+      },
+      data: {
+        type: 'object',
+        description: 'Input data to pass to the workflow (optional)',
+      },
+      autoConvert: {
+        type: 'boolean',
+        description: 'Add Execute Sub-workflow Trigger to Manual/Schedule workflows (default: false)',
+      },
+      testRunnerPath: {
+        type: 'string',
+        description: 'Test Runner webhook path (default: "test-runner")',
+      },
+      timeout: {
+        type: 'number',
+        description: 'Request timeout in ms (default: 60000)',
+      },
+    },
+    required: ['clientId', 'workflowId'],
+  },
+};

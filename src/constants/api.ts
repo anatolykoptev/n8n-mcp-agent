@@ -21,18 +21,6 @@ export const DEFAULT_MAX_RETRIES = 3;
 /** Default retry delay in milliseconds */
 export const DEFAULT_RETRY_DELAY_MS = 1_000;
 
-/** Maximum results per page for list operations */
-export const DEFAULT_PAGE_SIZE = 100;
-
-/** Maximum workflow name length */
-export const MAX_WORKFLOW_NAME_LENGTH = 255;
-
-/** Maximum tag name length */
-export const MAX_TAG_NAME_LENGTH = 100;
-
-/** Maximum variable key length */
-export const MAX_VARIABLE_KEY_LENGTH = 100;
-
 /** HTTP headers for n8n API requests */
 export const DEFAULT_HEADERS = {
   Accept: 'application/json',
@@ -63,25 +51,3 @@ export const BLOCKED_IP_PATTERNS = [
 
 /** Allowed protocols for n8n URLs */
 export const ALLOWED_PROTOCOLS = ['https:', 'http:'] as const;
-
-/** Execution status values */
-export const EXECUTION_STATUSES = [
-  'error',
-  'success',
-  'waiting',
-] as const;
-
-/** Audit categories */
-export const AUDIT_CATEGORIES = [
-  'credentials',
-  'database',
-  'nodes',
-  'filesystem',
-  'instance',
-] as const;
-
-/** User roles */
-export const USER_ROLES = [
-  'global:admin',
-  'global:member',
-] as const;

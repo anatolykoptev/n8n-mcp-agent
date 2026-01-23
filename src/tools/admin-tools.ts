@@ -127,10 +127,45 @@ export const userTools: McpToolDefinition[] = [
 ];
 
 // =============================================================================
+// Auth Tools (REST API)
+// =============================================================================
+
+export const authTools: McpToolDefinition[] = [
+  {
+    name: 'n8n-login',
+    description:
+      'Login to n8n using email/password. Returns session cookie for REST API operations (e.g., list-credentials). Required because some endpoints are not available in Public API.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        ...clientIdProperty(),
+        email: { type: 'string', description: 'n8n user email' },
+        password: { type: 'string', description: 'n8n user password' },
+      },
+      required: ['clientId', 'email', 'password'],
+    },
+  },
+];
+
+// =============================================================================
 // Credential Tools
 // =============================================================================
 
 export const credentialTools: McpToolDefinition[] = [
+  {
+    name: 'list-credentials',
+    description:
+      'List all credentials via REST API. Requires sessionCookie from n8n-login. Returns full credential list with type, name, and usage info.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        ...clientIdProperty(),
+        sessionCookie: { type: 'string', description: 'Session cookie from n8n-login' },
+        includeScopes: { type: 'boolean', description: 'Include credential scopes (default: true)' },
+      },
+      required: ['clientId', 'sessionCookie'],
+    },
+  },
   {
     name: 'create-credential',
     description:

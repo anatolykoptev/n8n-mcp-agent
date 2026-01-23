@@ -1,0 +1,6 @@
+# Auth cache (contains sensitive data)
+.n8n-auth-cache.json
+
+# Local environment
+.env
+.env.local

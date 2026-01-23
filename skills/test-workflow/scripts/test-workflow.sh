@@ -14,14 +14,10 @@ if [ -f "$ENV_FILE" ]; then
   export $(grep -v '^#' "$ENV_FILE" | xargs)
 fi
 
-N8N_URL="${N8N_URL:-https://n8n.hully.one}"
-N8N_API_KEY="${N8N_API_KEY:-}"
+# Configuration from environment (no defaults for sensitive values)
+N8N_URL="${N8N_URL:?ERROR: N8N_URL not set. Add it to .env file}"
+N8N_API_KEY="${N8N_API_KEY:?ERROR: N8N_API_KEY not set. Add it to .env file}"
 TEST_RUNNER_PATH="${TEST_RUNNER_PATH:-test-runner}"
-
-if [ -z "$N8N_API_KEY" ]; then
-  echo "ERROR: N8N_API_KEY not set" >&2
-  exit 1
-fi
 
 # Parse arguments
 WORKFLOW_ID=""

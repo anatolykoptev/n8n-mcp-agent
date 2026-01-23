@@ -63,5 +63,15 @@ junit.xml
 .temp/
 tmp/
 
+# Sensitive credential cache (NEVER commit)
+.n8n-auth-cache.json
+extension/.n8n-auth-cache.json
+*.auth-cache.json
+
+# Auth secrets (NEVER commit)
+.n8n-auth-secret
+extension/.n8n-auth-secret
+*.auth-secret
+
 # TypeScript
 *.js.map

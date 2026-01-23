@@ -15,11 +15,12 @@ import {
   GetUserSchema,
   DeleteUserSchema,
 } from '../schemas/tool-inputs.js';
-import { createSuccessResponse } from '../types/mcp.js';
+import { createSuccessResponse, createCrudResponse } from '../types/mcp.js';
 import {
   createClientHandler,
   globalRegistry,
   type WrappedHandler,
+  type HandlerRegistry,
 } from './registry.js';
 
 // =============================================================================
@@ -63,9 +64,7 @@ export const createUsers: WrappedHandler = createClientHandler(
       input.users as Parameters<typeof client.users.create>[0]
     );
 
-    return createSuccessResponse(
-      `Successfully created ${createdUsers.length} user(s):\n${JSON.stringify(createdUsers, null, 2)}`
-    );
+    return createCrudResponse('created', 'users', createdUsers);
   }
 );
 
@@ -95,17 +94,13 @@ export const deleteUser: WrappedHandler = createClientHandler(
   async (input, client) => {
     await client.users.delete(input.idOrEmail);
 
-    return createSuccessResponse(
-      `Successfully deleted user: ${input.idOrEmail}`
-    );
+    return createCrudResponse('deleted', 'user', { idOrEmail: input.idOrEmail });
   }
 );
 
 // =============================================================================
 // Registration
 // =============================================================================
-
-import type { HandlerRegistry } from './registry.js';
 
 /**
  * Register all user handlers with a registry

@@ -1,6 +1,10 @@
 /**
  * @module clients/base/http-client
  * @description Base HTTP client with retry, timeout, and SSRF protection
+ *
+ * @architecture Keep this file focused on core HTTP operations (~200 lines).
+ * - retry.ts — retry logic, backoff calculations
+ * - auth.ts — login, session cookie handling
  */
 
 import {
@@ -16,9 +20,10 @@ import {
   N8N_API_BASE_PATH,
   DEFAULT_MAX_RETRIES,
   DEFAULT_RETRY_DELAY_MS,
-  MAX_RETRY_DELAY_MS,
 } from '../../constants/api.js';
 import { API_ERRORS } from '../../constants/errors.js';
+import { withRetry } from './retry.js';
+import { login as performLogin } from './auth.js';
 
 // =============================================================================
 // Types
@@ -40,27 +45,9 @@ export interface RequestOptions {
   skipRetry?: boolean;
 }
 
-// =============================================================================
-// Retry Logic
-// =============================================================================
-
-/** Status codes that should trigger a retry */
-const RETRYABLE_STATUS_CODES = new Set([408, 429, 500, 502, 503, 504]);
-
-/**
- * Calculate delay with exponential backoff and jitter
- */
-function calculateBackoff(attempt: number, baseDelay: number): number {
-  const exponentialDelay = baseDelay * Math.pow(2, attempt);
-  const jitter = Math.random() * 0.3 * exponentialDelay;
-  return Math.min(exponentialDelay + jitter, MAX_RETRY_DELAY_MS);
-}
-
-/**
- * Sleep for specified milliseconds
- */
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
+export interface RestRequestOptions extends RequestOptions {
+  /** Session cookie for internal REST API */
+  sessionCookie?: string;
 }
 
 // =============================================================================
@@ -92,30 +79,23 @@ export class HttpClient {
   }
 
   /**
-   * Get the full API URL for an endpoint
+   * Get the base API URL
    */
   getApiUrl(): string {
     return this.baseUrl;
   }
 
   /**
-   * Make an authenticated request to the API
+   * Make an authenticated request to the public API
    */
   async request<T>(endpoint: string, options: RequestOptions = {}): Promise<T> {
     const fullUrl = `${this.baseUrl}${N8N_API_BASE_PATH}${endpoint}`;
-    const method = options.method ?? 'GET';
     const timeout = options.timeout ?? this.timeout;
 
     // Validate URL for SSRF protection
-    const urlValidation = validateUrl(fullUrl);
-    if (!urlValidation.valid) {
-      throw new SsrfProtectionError(`SSRF Protection: ${urlValidation.error}`, {
-        blockedUrl: fullUrl,
-        reason: urlValidation.error ?? 'URL validation failed',
-      });
-    }
+    this.validateSsrf(fullUrl);
 
-    // Build headers
+    // Build headers with API key
     const headers: Record<string, string> = {
       ...DEFAULT_HEADERS,
       [N8N_API_KEY_HEADER]: this.apiKey,
@@ -123,37 +103,77 @@ export class HttpClient {
     };
 
     // Execute with retry
-    const maxAttempts = options.skipRetry ? 1 : this.maxRetries;
-    let lastError: Error | undefined;
-
-    for (let attempt = 0; attempt < maxAttempts; attempt++) {
-      try {
-        return await this.executeRequest<T>(fullUrl, method, headers, options.body, timeout, endpoint);
-      } catch (error) {
-        lastError = error instanceof Error ? error : new Error(String(error));
-
-        // Don't retry if it's a client error (4xx except retryable ones)
-        if (error instanceof N8nApiError) {
-          if (!RETRYABLE_STATUS_CODES.has(error.statusCode)) {
-            throw error;
-          }
-        }
-
-        // Don't retry SSRF errors
-        if (error instanceof SsrfProtectionError) {
-          throw error;
-        }
-
-        // Wait before retry (except on last attempt)
-        if (attempt < maxAttempts - 1) {
-          const delay = calculateBackoff(attempt, this.retryDelay);
-          await sleep(delay);
-        }
+    return withRetry(
+      () => this.executeRequest<T>(fullUrl, options.method ?? 'GET', headers, options.body, timeout, endpoint),
+      {
+        maxAttempts: this.maxRetries,
+        baseDelay: this.retryDelay,
+        skipRetry: options.skipRetry,
       }
+    );
+  }
+
+  /**
+   * Make a request to internal REST API (session-based auth)
+   * Used for endpoints not available in public API, like GET /rest/credentials
+   */
+  async requestRest<T>(endpoint: string, options: RestRequestOptions = {}): Promise<T> {
+    const fullUrl = `${this.baseUrl}/rest${endpoint}`;
+    const timeout = options.timeout ?? this.timeout;
+
+    // Validate URL for SSRF protection
+    this.validateSsrf(fullUrl);
+
+    // Build headers with session cookie (no API key)
+    // browser-id is required by n8n for REST API authentication
+    const headers: Record<string, string> = {
+      ...DEFAULT_HEADERS,
+      'browser-id': 'mcp-agent',
+      ...options.headers,
+    };
+
+    if (options.sessionCookie) {
+      headers['Cookie'] = options.sessionCookie;
     }
 
-    // All retries exhausted
-    throw lastError ?? new Error('Request failed after all retries');
+    // Execute with retry
+    return withRetry(
+      () => this.executeRequest<T>(fullUrl, options.method ?? 'GET', headers, options.body, timeout, endpoint),
+      {
+        maxAttempts: this.maxRetries,
+        baseDelay: this.retryDelay,
+        skipRetry: options.skipRetry,
+      }
+    );
+  }
+
+  /**
+   * Login to n8n and return session cookie
+   */
+  async login(email: string, password: string): Promise<string> {
+    return performLogin({
+      baseUrl: this.baseUrl,
+      email,
+      password,
+      timeout: this.timeout,
+    });
+  }
+
+  // ===========================================================================
+  // Private Methods
+  // ===========================================================================
+
+  /**
+   * Validate URL for SSRF protection
+   */
+  private validateSsrf(url: string): void {
+    const validation = validateUrl(url);
+    if (!validation.valid) {
+      throw new SsrfProtectionError(`SSRF Protection: ${validation.error}`, {
+        blockedUrl: url,
+        reason: validation.error ?? 'URL validation failed',
+      });
+    }
   }
 
   /**
@@ -181,34 +201,10 @@ export class HttpClient {
       clearTimeout(timeoutId);
 
       if (!response.ok) {
-        const errorText = await response.text();
-        let errorMessage: string;
-        let responseBody: unknown;
-
-        try {
-          const errorJson = JSON.parse(errorText) as { message?: string };
-          responseBody = errorJson;
-          const message = errorJson.message ?? errorText;
-
-          // Check for license-related errors
-          if (message.toLowerCase().includes('license')) {
-            errorMessage = `${API_ERRORS.LICENSE_REQUIRED}. Error: ${message}`;
-          } else {
-            errorMessage = message;
-          }
-        } catch {
-          errorMessage = errorText;
-        }
-
-        throw new N8nApiError(errorMessage, {
-          statusCode: response.status,
-          endpoint,
-          method,
-          responseBody,
-        });
+        throw await this.createApiError(response, endpoint, method);
       }
 
-      // Handle 204 No Content responses
+      // Handle 204 No Content
       if (response.status === 204) {
         return {} as T;
       }
@@ -222,7 +218,7 @@ export class HttpClient {
         throw error;
       }
 
-      // Handle abort (timeout)
+      // Handle timeout
       if (error instanceof Error && error.name === 'AbortError') {
         throw new N8nConnectionError(`Request timeout after ${timeout}ms`, {
           url,
@@ -231,7 +227,7 @@ export class HttpClient {
         });
       }
 
-      // Wrap other errors
+      // Wrap unknown errors
       const cause = error instanceof Error ? error : undefined;
       throw new N8nConnectionError(
         `Failed to connect: ${cause?.message ?? 'Unknown error'}`,
@@ -243,5 +239,38 @@ export class HttpClient {
         }
       );
     }
+  }
+
+  /**
+   * Create API error from response
+   */
+  private async createApiError(
+    response: Response,
+    endpoint: string,
+    method: string
+  ): Promise<N8nApiError> {
+    const errorText = await response.text();
+    let errorMessage: string;
+    let responseBody: unknown;
+
+    try {
+      const errorJson = JSON.parse(errorText) as { message?: string };
+      responseBody = errorJson;
+      const message = errorJson.message ?? errorText;
+
+      // Check for license-related errors
+      errorMessage = message.toLowerCase().includes('license')
+        ? `${API_ERRORS.LICENSE_REQUIRED}. Error: ${message}`
+        : message;
+    } catch {
+      errorMessage = errorText;
+    }
+
+    return new N8nApiError(errorMessage, {
+      statusCode: response.status,
+      endpoint,
+      method,
+      responseBody,
+    });
   }
 }

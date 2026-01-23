@@ -21,11 +21,12 @@ import {
   GetWorkflowTagsSchema,
   UpdateWorkflowTagsSchema,
 } from '../schemas/tool-inputs.js';
-import { createSuccessResponse } from '../types/mcp.js';
+import { createSuccessResponse, createCrudResponse } from '../types/mcp.js';
 import {
   createClientHandler,
   globalRegistry,
   type WrappedHandler,
+  type HandlerRegistry,
 } from './registry.js';
 
 // =============================================================================
@@ -56,9 +57,7 @@ export const createTag: WrappedHandler = createClientHandler(
   CreateTagSchema,
   async (input, client) => {
     const tag = await client.tags.create(input.name);
-    return createSuccessResponse(
-      `Successfully created tag:\n${JSON.stringify(tag, null, 2)}`
-    );
+    return createCrudResponse('created', 'tag', tag);
   }
 );
 
@@ -87,9 +86,7 @@ export const updateTag: WrappedHandler = createClientHandler(
   UpdateTagSchema,
   async (input, client) => {
     const tag = await client.tags.update(input.id, input.name);
-    return createSuccessResponse(
-      `Successfully updated tag:\n${JSON.stringify(tag, null, 2)}`
-    );
+    return createCrudResponse('updated', 'tag', tag);
   }
 );
 
@@ -103,9 +100,7 @@ export const deleteTag: WrappedHandler = createClientHandler(
   DeleteTagSchema,
   async (input, client) => {
     const tag = await client.tags.delete(input.id);
-    return createSuccessResponse(
-      `Successfully deleted tag:\n${JSON.stringify(tag, null, 2)}`
-    );
+    return createCrudResponse('deleted', 'tag', tag);
   }
 );
 
@@ -137,17 +132,13 @@ export const updateWorkflowTags: WrappedHandler = createClientHandler(
       String(input.workflowId),
       input.tagIds
     );
-    return createSuccessResponse(
-      `Successfully updated workflow tags:\n${JSON.stringify(updatedWorkflow, null, 2)}`
-    );
+    return createCrudResponse('updated', 'workflow-tags', updatedWorkflow);
   }
 );
 
 // =============================================================================
 // Registration
 // =============================================================================
-
-import type { HandlerRegistry } from './registry.js';
 
 /**
  * Register all tag handlers with a registry

@@ -12,15 +12,15 @@ import type { McpToolDefinition } from '../types/mcp.js';
 export { JSON_NOTE, ENTERPRISE_NOTE, clientIdProperty, idProperty } from './helpers.js';
 
 // Re-export tool definitions
-export { initN8nTool, workflowTools } from './workflow-tools.js';
-export { projectTools, userTools, credentialTools, auditTool } from './admin-tools.js';
+export { initN8nTool, workflowTools, testWorkflowTool } from './workflow-tools.js';
+export { authTools, projectTools, userTools, credentialTools, auditTool } from './admin-tools.js';
 export { executionTools, tagTools, variableTools } from './data-tools.js';
 export { patternTools } from './pattern-tools.js';
 export { diagnosticTools } from './diagnostic-tools.js';
 
 // Import for aggregation
-import { initN8nTool, workflowTools } from './workflow-tools.js';
-import { projectTools, userTools, credentialTools, auditTool } from './admin-tools.js';
+import { initN8nTool, workflowTools, testWorkflowTool } from './workflow-tools.js';
+import { authTools, projectTools, userTools, credentialTools, auditTool } from './admin-tools.js';
 import { executionTools, tagTools, variableTools } from './data-tools.js';
 import { patternTools } from './pattern-tools.js';
 import { diagnosticTools } from './diagnostic-tools.js';
@@ -37,6 +37,8 @@ export function getAllTools(): McpToolDefinition[] {
   return [
     initN8nTool,
     ...workflowTools,
+    testWorkflowTool,
+    ...authTools,
     ...projectTools,
     ...userTools,
     ...variableTools,

@@ -25,11 +25,12 @@ import {
   ExecuteWebhookSchema,
   GetWebhookUrlSchema,
 } from '../schemas/tool-inputs.js';
-import { createSuccessResponse } from '../types/mcp.js';
+import { createSuccessResponse, createCrudResponse } from '../types/mcp.js';
 import {
   createClientHandler,
   globalRegistry,
   type WrappedHandler,
+  type HandlerRegistry,
 } from './registry.js';
 
 // =============================================================================
@@ -92,9 +93,7 @@ export const createWorkflow: WrappedHandler = createClientHandler(
       input.connections as unknown as Parameters<typeof client.workflows.create>[2]
     );
 
-    return createSuccessResponse(
-      `Successfully created workflow:\n${JSON.stringify(workflow, null, 2)}`
-    );
+    return createCrudResponse('created', 'workflow', workflow);
   }
 );
 
@@ -114,9 +113,7 @@ export const updateWorkflow: WrappedHandler = createClientHandler(
       input.workflow as Parameters<typeof client.workflows.update>[1]
     );
 
-    return createSuccessResponse(
-      `Successfully updated workflow:\n${JSON.stringify(updatedWorkflow, null, 2)}`
-    );
+    return createCrudResponse('updated', 'workflow', updatedWorkflow);
   }
 );
 
@@ -131,9 +128,7 @@ export const deleteWorkflow: WrappedHandler = createClientHandler(
   async (input, client) => {
     const workflow = await client.workflows.delete(String(input.id));
 
-    return createSuccessResponse(
-      `Successfully deleted workflow:\n${JSON.stringify(workflow, null, 2)}`
-    );
+    return createCrudResponse('deleted', 'workflow', workflow);
   }
 );
 
@@ -148,9 +143,7 @@ export const activateWorkflow: WrappedHandler = createClientHandler(
   async (input, client) => {
     const workflow = await client.workflows.activate(String(input.id));
 
-    return createSuccessResponse(
-      `Successfully activated workflow:\n${JSON.stringify(workflow, null, 2)}`
-    );
+    return createCrudResponse('activated', 'workflow', workflow);
   }
 );
 
@@ -165,9 +158,7 @@ export const deactivateWorkflow: WrappedHandler = createClientHandler(
   async (input, client) => {
     const workflow = await client.workflows.deactivate(String(input.id));
 
-    return createSuccessResponse(
-      `Successfully deactivated workflow:\n${JSON.stringify(workflow, null, 2)}`
-    );
+    return createCrudResponse('deactivated', 'workflow', workflow);
   }
 );
 
@@ -229,8 +220,6 @@ export const getWebhookUrl: WrappedHandler = createClientHandler(
 // =============================================================================
 // Registration
 // =============================================================================
-
-import type { HandlerRegistry } from './registry.js';
 
 /**
  * Register all workflow handlers with a registry

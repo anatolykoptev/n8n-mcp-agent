@@ -15,11 +15,12 @@ import {
   DeleteProjectSchema,
   UpdateProjectSchema,
 } from '../schemas/tool-inputs.js';
-import { createSuccessResponse } from '../types/mcp.js';
+import { createSuccessResponse, createCrudResponse } from '../types/mcp.js';
 import {
   createClientHandler,
   globalRegistry,
   type WrappedHandler,
+  type HandlerRegistry,
 } from './registry.js';
 
 // =============================================================================
@@ -51,9 +52,7 @@ export const createProject: WrappedHandler = createClientHandler(
   async (input, client) => {
     await client.projects.create(input.name);
 
-    return createSuccessResponse(
-      `Successfully created project: ${input.name}`
-    );
+    return createCrudResponse('created', 'project', { name: input.name });
   }
 );
 
@@ -68,9 +67,7 @@ export const deleteProject: WrappedHandler = createClientHandler(
   async (input, client) => {
     await client.projects.delete(input.projectId);
 
-    return createSuccessResponse(
-      `Successfully deleted project: ${input.projectId}`
-    );
+    return createCrudResponse('deleted', 'project', { projectId: input.projectId });
   }
 );
 
@@ -86,17 +83,13 @@ export const updateProject: WrappedHandler = createClientHandler(
   async (input, client) => {
     await client.projects.update(input.projectId, input.name);
 
-    return createSuccessResponse(
-      `Successfully updated project: ${input.projectId}`
-    );
+    return createCrudResponse('updated', 'project', { projectId: input.projectId, name: input.name });
   }
 );
 
 // =============================================================================
 // Registration
 // =============================================================================
-
-import type { HandlerRegistry } from './registry.js';
 
 /**
  * Register all project handlers with a registry

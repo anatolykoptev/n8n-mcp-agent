@@ -13,12 +13,13 @@ import {
   CreateVariableSchema,
   DeleteVariableSchema,
 } from '../schemas/tool-inputs.js';
-import { createSuccessResponse } from '../types/mcp.js';
+import { createSuccessResponse, createCrudResponse } from '../types/mcp.js';
 import type { N8nVariable } from '../types/n8n.js';
 import {
   createClientHandler,
   globalRegistry,
   type WrappedHandler,
+  type HandlerRegistry,
 } from './registry.js';
 
 // =============================================================================
@@ -58,9 +59,7 @@ export const createVariable: WrappedHandler = createClientHandler(
   async (input, client) => {
     await client.variables.create(input.key, input.value);
 
-    return createSuccessResponse(
-      `Successfully created variable: ${input.key}`
-    );
+    return createCrudResponse('created', 'variable', { key: input.key, value: input.value });
   }
 );
 
@@ -75,17 +74,13 @@ export const deleteVariable: WrappedHandler = createClientHandler(
   async (input, client) => {
     await client.variables.delete(input.id);
 
-    return createSuccessResponse(
-      `Successfully deleted variable: ${input.id}`
-    );
+    return createCrudResponse('deleted', 'variable', { id: input.id });
   }
 );
 
 // =============================================================================
 // Registration
 // =============================================================================
-
-import type { HandlerRegistry } from './registry.js';
 
 /**
  * Register all variable handlers with a registry

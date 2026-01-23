@@ -124,3 +124,49 @@ export function createSuccessResponse(
 export function createClientNotInitializedError(): McpToolResult {
   return createErrorResponse(CLIENT_ERRORS.NOT_INITIALIZED);
 }
+
+// =============================================================================
+// CRUD Response Helpers
+// =============================================================================
+
+/**
+ * CRUD action types for standardized responses
+ */
+export type CrudAction = 'created' | 'updated' | 'deleted' | 'activated' | 'deactivated';
+
+/**
+ * Standardized CRUD response format
+ */
+export interface CrudResponse<T = unknown> {
+  success: true;
+  action: CrudAction;
+  entity: string;
+  data: T;
+}
+
+/**
+ * Create a standardized CRUD response
+ *
+ * @param action - The CRUD action performed
+ * @param entity - Entity type (workflow, tag, execution, etc.)
+ * @param data - The entity data
+ *
+ * @example
+ * ```ts
+ * return createCrudResponse('created', 'workflow', workflow);
+ * // Returns: { success: true, action: 'created', entity: 'workflow', data: {...} }
+ * ```
+ */
+export function createCrudResponse<T>(
+  action: CrudAction,
+  entity: string,
+  data: T
+): McpToolResult {
+  const response: CrudResponse<T> = {
+    success: true,
+    action,
+    entity,
+    data,
+  };
+  return createSuccessResponse(response);
+}

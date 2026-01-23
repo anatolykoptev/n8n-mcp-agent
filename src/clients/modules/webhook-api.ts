@@ -91,7 +91,7 @@ export class WebhookApi {
   /**
    * Get webhook information from a workflow
    */
-  async getInfo(workflow: N8nWorkflow): Promise<WebhookInfo | null> {
+  getInfo(workflow: N8nWorkflow): WebhookInfo | null {
     const webhookNode = workflow.nodes?.find(
       (node) =>
         node.type === 'n8n-nodes-base.webhook' || node.type === '@n8n/n8n-nodes-langchain.webhook'

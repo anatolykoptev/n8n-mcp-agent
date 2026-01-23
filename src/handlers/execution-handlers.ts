@@ -13,12 +13,13 @@ import {
   GetExecutionSchema,
   DeleteExecutionSchema,
 } from '../schemas/tool-inputs.js';
-import { createSuccessResponse } from '../types/mcp.js';
+import { createSuccessResponse, createCrudResponse } from '../types/mcp.js';
 import type { N8nExecution } from '../types/n8n.js';
 import {
   createClientHandler,
   globalRegistry,
   type WrappedHandler,
+  type HandlerRegistry,
 } from './registry.js';
 
 // =============================================================================
@@ -86,17 +87,13 @@ export const deleteExecution: WrappedHandler = createClientHandler(
   async (input, client) => {
     const execution = await client.executions.delete(input.id);
 
-    return createSuccessResponse(
-      `Successfully deleted execution:\n${JSON.stringify(execution, null, 2)}`
-    );
+    return createCrudResponse('deleted', 'execution', execution);
   }
 );
 
 // =============================================================================
 // Registration
 // =============================================================================
-
-import type { HandlerRegistry } from './registry.js';
 
 /**
  * Register all execution handlers with a registry

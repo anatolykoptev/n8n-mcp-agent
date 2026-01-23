@@ -21,30 +21,7 @@ import {
   VariableApi,
   CredentialApi,
   AuditApi,
-  type WebhookExecuteOptions,
-  type WebhookResponse,
-  type WebhookInfo,
-  type GetExecutionsOptions,
-  type GetTagsOptions,
-  type CreateUserPayload,
-  type CreatedUser,
-  type CredentialData,
-  type GenerateAuditOptions,
 } from './modules/index.js';
-
-// Re-export types for external use
-export { N8nApiError } from '../errors/n8n-errors.js';
-export type {
-  GetExecutionsOptions,
-  GetTagsOptions,
-  CreateUserPayload,
-  CreatedUser,
-  CredentialData,
-  GenerateAuditOptions,
-  WebhookExecuteOptions,
-  WebhookResponse,
-  WebhookInfo,
-};
 
 /** N8nClient configuration */
 export interface N8nClientConfig {
@@ -134,5 +111,17 @@ export class N8nClient {
    */
   get baseUrl(): string {
     return this.http.getApiUrl();
+  }
+
+  /**
+   * Login to n8n and get session cookie for REST API access
+   * Required for operations not available in Public API (e.g., listing credentials)
+   *
+   * @param email - n8n user email
+   * @param password - n8n user password
+   * @returns Session cookie string to use with REST API methods
+   */
+  async login(email: string, password: string): Promise<string> {
+    return this.http.login(email, password);
   }
 }

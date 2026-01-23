@@ -35,10 +35,16 @@ export type N8nClient = N8nClientType;
 export type ClientProvider = (clientId: string) => N8nClient | undefined;
 
 /**
+ * Session cookie provider function - retrieves session cookie by URL
+ */
+export type SessionCookieProvider = (url: string) => Promise<string | null>;
+
+/**
  * Handler context passed to all handlers
  */
 export interface HandlerContext {
   getClient: ClientProvider;
+  getSessionCookie?: SessionCookieProvider;
 }
 
 /**

@@ -8,7 +8,6 @@
  * - healthCheck: Quick health check
  */
 
-import { z } from 'zod';
 import { createSuccessResponse } from '../types/mcp.js';
 import {
   createClientHandler,
@@ -17,7 +16,11 @@ import {
   type WrappedHandler,
   type HandlerRegistry,
 } from './registry.js';
-import { ClientIdSchema } from '../schemas/tool-inputs.js';
+import {
+  DiagnoseN8nSchema,
+  AnalyzeLogsSchema,
+  HealthCheckSchema,
+} from '../schemas/tool-inputs.js';
 import {
   AlertLevel,
   analyzeLogs as analyzeLogsUtil,
@@ -25,39 +28,7 @@ import {
   isBotScannerRequest,
   type LogAnalysisResult,
 } from '../utils/log-patterns.js';
-import { DEFAULT_TIMEOUT_MS } from '../constants/api.js';
 import { CLIENT_ERRORS } from '../constants/errors.js';
-
-// =============================================================================
-// Schemas
-// =============================================================================
-
-export const DiagnoseN8nSchema = z.object({
-  clientId: ClientIdSchema,
-  includeExecutions: z.boolean().optional().default(true),
-  logLines: z.number().int().min(1).max(1000).optional().default(100),
-  verbose: z.boolean().optional().default(false),
-});
-
-export const AnalyzeLogsSchema = z.object({
-  clientId: ClientIdSchema,
-  logs: z.array(z.string()).min(1, 'At least one log line is required'),
-  service: z.string().optional(),
-  filterBotScans: z.boolean().optional().default(true),
-});
-
-export const HealthCheckSchema = z.object({
-  clientId: ClientIdSchema,
-  timeout: z.number().int().min(1000).max(DEFAULT_TIMEOUT_MS).optional().default(5000),
-});
-
-// =============================================================================
-// Type Exports
-// =============================================================================
-
-export type DiagnoseN8nInput = z.infer<typeof DiagnoseN8nSchema>;
-export type AnalyzeLogsInput = z.infer<typeof AnalyzeLogsSchema>;
-export type HealthCheckInput = z.infer<typeof HealthCheckSchema>;
 
 // =============================================================================
 // Diagnostic Types

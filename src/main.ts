@@ -30,6 +30,11 @@ import {
 } from '@modelcontextprotocol/sdk/types.js';
 
 import { N8nClient } from './clients/n8n-client.js';
+import {
+  isAuthServerRunning,
+  getSessionCookie,
+  getAllInstances,
+} from './clients/base/auth-server-client.js';
 import { globalRegistry, type HandlerContext } from './handlers/registry.js';
 import { registerAllHandlers } from './handlers/index.js';
 import { getAllTools } from './tools/index.js';
@@ -38,6 +43,7 @@ import { textResponse, errorResponse } from './utils/response.js';
 import { InitN8nSchema } from './schemas/tool-inputs.js';
 import { DEFAULT_CLIENT_ID, getEnvConfig, hasEnvConfig } from './constants/env.js';
 import type { McpToolResult } from './types/mcp.js';
+import { startAuthServer } from './services/auth-server.js';
 
 // =============================================================================
 // Client Storage
@@ -55,8 +61,9 @@ function getClient(clientId: string): N8nClient | undefined {
 
 /**
  * Handler context for all tool handlers
+ * Note: getSessionCookie is set after syncFromAuthServer runs
  */
-const handlerContext: HandlerContext = {
+let handlerContext: HandlerContext = {
   getClient,
 };
 
@@ -177,11 +184,55 @@ async function handleInitN8n(args: Record<string, unknown>): Promise<McpToolResu
 }
 
 // =============================================================================
+// Auth Server Integration
+// =============================================================================
+
+/** Session cookies from Chrome extension (via auth-server) */
+const sessionCookies = new Map<string, string>();
+
+/**
+ * Check auth-server for available session cookies
+ * Called on startup and can be called periodically
+ */
+async function syncFromAuthServer(): Promise<void> {
+  if (!(await isAuthServerRunning())) {
+    return;
+  }
+
+  const instances = await getAllInstances();
+
+  for (const [url, data] of Object.entries(instances)) {
+    if (data.sessionCookie) {
+      sessionCookies.set(url, data.sessionCookie);
+      console.error(`Auth-server: loaded session for ${url}`);
+    }
+  }
+}
+
+/**
+ * Get session cookie for a URL (from auth-server cache or direct fetch)
+ */
+async function getSessionCookieForUrl(url: string): Promise<string | null> {
+  // Check local cache first
+  if (sessionCookies.has(url)) {
+    return sessionCookies.get(url)!;
+  }
+
+  // Try fetching from auth-server
+  const cookie = await getSessionCookie(url);
+  if (cookie) {
+    sessionCookies.set(url, cookie);
+  }
+  return cookie;
+}
+
+// =============================================================================
 // Auto-Connect from Environment
 // =============================================================================
 
 /**
  * Auto-initialize n8n client from environment variables
+ * Enhanced with auth-server session cookie support
  * @returns True if auto-connected successfully
  */
 async function autoConnectFromEnv(): Promise<boolean> {
@@ -204,7 +255,15 @@ async function autoConnectFromEnv(): Promise<boolean> {
     const client = new N8nClient(url, apiKey);
     await client.workflows.list();
     clients.set(DEFAULT_CLIENT_ID, client);
-    console.error(`Auto-connected to n8n at ${url} (clientId: ${DEFAULT_CLIENT_ID})`);
+
+    // Check for session cookie from auth-server
+    const sessionCookie = await getSessionCookieForUrl(url);
+    if (sessionCookie) {
+      console.error(`Auto-connected to n8n at ${url} with session cookie (clientId: ${DEFAULT_CLIENT_ID})`);
+    } else {
+      console.error(`Auto-connected to n8n at ${url} (clientId: ${DEFAULT_CLIENT_ID})`);
+    }
+
     return true;
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unknown error';
@@ -218,6 +277,18 @@ async function autoConnectFromEnv(): Promise<boolean> {
 // =============================================================================
 
 async function main(): Promise<void> {
+  // Start embedded auth-server for Chrome extension bridge
+  startAuthServer();
+
+  // Sync credentials from auth-server (Chrome extension bridge)
+  await syncFromAuthServer();
+
+  // Update handler context with session cookie provider
+  handlerContext = {
+    getClient,
+    getSessionCookie: getSessionCookieForUrl,
+  };
+
   // Try auto-connect from environment
   await autoConnectFromEnv();
 
