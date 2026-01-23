@@ -41,7 +41,7 @@ import {
 export const listTags: WrappedHandler = createClientHandler(
   ListTagsSchema,
   async (input, client) => {
-    const tagList = await client.getTags({ limit: input.limit });
+    const tagList = await client.tags.list({ limit: input.limit });
     return createSuccessResponse(tagList.data);
   }
 );
@@ -55,7 +55,7 @@ export const listTags: WrappedHandler = createClientHandler(
 export const createTag: WrappedHandler = createClientHandler(
   CreateTagSchema,
   async (input, client) => {
-    const tag = await client.createTag(input.name);
+    const tag = await client.tags.create(input.name);
     return createSuccessResponse(
       `Successfully created tag:\n${JSON.stringify(tag, null, 2)}`
     );
@@ -71,7 +71,7 @@ export const createTag: WrappedHandler = createClientHandler(
 export const getTag: WrappedHandler = createClientHandler(
   GetTagSchema,
   async (input, client) => {
-    const tag = await client.getTag(input.id);
+    const tag = await client.tags.get(input.id);
     return createSuccessResponse(tag);
   }
 );
@@ -86,7 +86,7 @@ export const getTag: WrappedHandler = createClientHandler(
 export const updateTag: WrappedHandler = createClientHandler(
   UpdateTagSchema,
   async (input, client) => {
-    const tag = await client.updateTag(input.id, input.name);
+    const tag = await client.tags.update(input.id, input.name);
     return createSuccessResponse(
       `Successfully updated tag:\n${JSON.stringify(tag, null, 2)}`
     );
@@ -102,7 +102,7 @@ export const updateTag: WrappedHandler = createClientHandler(
 export const deleteTag: WrappedHandler = createClientHandler(
   DeleteTagSchema,
   async (input, client) => {
-    const tag = await client.deleteTag(input.id);
+    const tag = await client.tags.delete(input.id);
     return createSuccessResponse(
       `Successfully deleted tag:\n${JSON.stringify(tag, null, 2)}`
     );
@@ -118,7 +118,7 @@ export const deleteTag: WrappedHandler = createClientHandler(
 export const getWorkflowTags: WrappedHandler = createClientHandler(
   GetWorkflowTagsSchema,
   async (input, client) => {
-    const tags = await client.getWorkflowTags(String(input.workflowId));
+    const tags = await client.tags.getWorkflowTags(String(input.workflowId));
     return createSuccessResponse(tags);
   }
 );
@@ -133,7 +133,7 @@ export const getWorkflowTags: WrappedHandler = createClientHandler(
 export const updateWorkflowTags: WrappedHandler = createClientHandler(
   UpdateWorkflowTagsSchema,
   async (input, client) => {
-    const updatedWorkflow = await client.updateWorkflowTags(
+    const updatedWorkflow = await client.tags.updateWorkflowTags(
       String(input.workflowId),
       input.tagIds
     );

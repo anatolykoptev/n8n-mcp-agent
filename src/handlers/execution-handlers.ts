@@ -44,7 +44,7 @@ export const listExecutions: WrappedHandler = createClientHandler(
       includeData: input.includeData,
     };
 
-    const executionList = await client.getExecutions(options);
+    const executionList = await client.executions.list(options);
 
     // Format executions for cleaner output
     const formattedExecutions = executionList.data.map((exec: N8nExecution) => ({
@@ -70,7 +70,7 @@ export const listExecutions: WrappedHandler = createClientHandler(
 export const getExecution: WrappedHandler = createClientHandler(
   GetExecutionSchema,
   async (input, client) => {
-    const execution = await client.getExecution(input.id, input.includeData);
+    const execution = await client.executions.get(input.id, input.includeData);
     return createSuccessResponse(execution);
   }
 );
@@ -84,7 +84,7 @@ export const getExecution: WrappedHandler = createClientHandler(
 export const deleteExecution: WrappedHandler = createClientHandler(
   DeleteExecutionSchema,
   async (input, client) => {
-    const execution = await client.deleteExecution(input.id);
+    const execution = await client.executions.delete(input.id);
 
     return createSuccessResponse(
       `Successfully deleted execution:\n${JSON.stringify(execution, null, 2)}`

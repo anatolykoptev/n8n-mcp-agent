@@ -161,7 +161,7 @@ async function handleInitN8n(args: Record<string, unknown>): Promise<McpToolResu
   try {
     // Create client and test connection
     const client = new N8nClient(url, apiKey);
-    await client.listWorkflows();
+    await client.workflows.list();
 
     // Generate client ID and store
     const clientId = generateClientId(url);
@@ -202,7 +202,7 @@ async function autoConnectFromEnv(): Promise<boolean> {
 
   try {
     const client = new N8nClient(url, apiKey);
-    await client.listWorkflows();
+    await client.workflows.list();
     clients.set(DEFAULT_CLIENT_ID, client);
     console.error(`Auto-connected to n8n at ${url} (clientId: ${DEFAULT_CLIENT_ID})`);
     return true;

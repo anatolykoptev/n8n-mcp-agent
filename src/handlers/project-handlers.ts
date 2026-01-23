@@ -34,7 +34,7 @@ import {
 export const listProjects: WrappedHandler = createClientHandler(
   ListProjectsSchema,
   async (_input, client) => {
-    const projects = await client.listProjects();
+    const projects = await client.projects.list();
 
     return createSuccessResponse(projects);
   }
@@ -49,10 +49,10 @@ export const listProjects: WrappedHandler = createClientHandler(
 export const createProject: WrappedHandler = createClientHandler(
   CreateProjectSchema,
   async (input, client) => {
-    const project = await client.createProject(input.name);
+    await client.projects.create(input.name);
 
     return createSuccessResponse(
-      `Successfully created project:\n${JSON.stringify(project, null, 2)}`
+      `Successfully created project: ${input.name}`
     );
   }
 );
@@ -66,7 +66,7 @@ export const createProject: WrappedHandler = createClientHandler(
 export const deleteProject: WrappedHandler = createClientHandler(
   DeleteProjectSchema,
   async (input, client) => {
-    await client.deleteProject(input.projectId);
+    await client.projects.delete(input.projectId);
 
     return createSuccessResponse(
       `Successfully deleted project: ${input.projectId}`
@@ -84,13 +84,10 @@ export const deleteProject: WrappedHandler = createClientHandler(
 export const updateProject: WrappedHandler = createClientHandler(
   UpdateProjectSchema,
   async (input, client) => {
-    const updatedProject = await client.updateProject(
-      input.projectId,
-      input.name
-    );
+    await client.projects.update(input.projectId, input.name);
 
     return createSuccessResponse(
-      `Successfully updated project:\n${JSON.stringify(updatedProject, null, 2)}`
+      `Successfully updated project: ${input.projectId}`
     );
   }
 );

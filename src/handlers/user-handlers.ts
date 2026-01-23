@@ -34,7 +34,7 @@ import {
 export const listUsers: WrappedHandler = createClientHandler(
   ListUsersSchema,
   async (_input, client) => {
-    const users = await client.listUsers();
+    const users = await client.users.list();
 
     // Format users for cleaner output
     const formattedUsers = users.data.map((user) => ({
@@ -59,8 +59,8 @@ export const createUsers: WrappedHandler = createClientHandler(
   CreateUsersSchema,
   async (input, client) => {
     // Cast to expected type - Zod validates structure, we cast for TypeScript
-    const createdUsers = await client.createUsers(
-      input.users as Parameters<typeof client.createUsers>[0]
+    const createdUsers = await client.users.create(
+      input.users as Parameters<typeof client.users.create>[0]
     );
 
     return createSuccessResponse(
@@ -78,7 +78,7 @@ export const createUsers: WrappedHandler = createClientHandler(
 export const getUser: WrappedHandler = createClientHandler(
   GetUserSchema,
   async (input, client) => {
-    const user = await client.getUser(input.idOrEmail);
+    const user = await client.users.get(input.idOrEmail);
 
     return createSuccessResponse(user);
   }
@@ -93,10 +93,10 @@ export const getUser: WrappedHandler = createClientHandler(
 export const deleteUser: WrappedHandler = createClientHandler(
   DeleteUserSchema,
   async (input, client) => {
-    const user = await client.deleteUser(input.idOrEmail);
+    await client.users.delete(input.idOrEmail);
 
     return createSuccessResponse(
-      `Successfully deleted user:\n${JSON.stringify(user, null, 2)}`
+      `Successfully deleted user: ${input.idOrEmail}`
     );
   }
 );

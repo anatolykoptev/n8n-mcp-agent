@@ -44,7 +44,7 @@ import {
 export const listWorkflows: WrappedHandler = createClientHandler(
   ListWorkflowsSchema,
   async (_input, client) => {
-    const workflows = await client.listWorkflows();
+    const workflows = await client.workflows.list();
 
     // Format workflows for cleaner output
     const formattedWorkflows = workflows.data.map((wf) => ({
@@ -69,7 +69,7 @@ export const listWorkflows: WrappedHandler = createClientHandler(
 export const getWorkflow: WrappedHandler = createClientHandler(
   GetWorkflowSchema,
   async (input, client) => {
-    const workflow = await client.getWorkflow(String(input.id));
+    const workflow = await client.workflows.get(String(input.id));
     return createSuccessResponse(workflow);
   }
 );
@@ -86,10 +86,10 @@ export const createWorkflow: WrappedHandler = createClientHandler(
   CreateWorkflowSchema,
   async (input, client) => {
     // Cast to expected types - Zod validates structure, we cast for TypeScript
-    const workflow = await client.createWorkflow(
+    const workflow = await client.workflows.create(
       input.name,
-      input.nodes as unknown as Parameters<typeof client.createWorkflow>[1],
-      input.connections as unknown as Parameters<typeof client.createWorkflow>[2]
+      input.nodes as unknown as Parameters<typeof client.workflows.create>[1],
+      input.connections as unknown as Parameters<typeof client.workflows.create>[2]
     );
 
     return createSuccessResponse(
@@ -109,9 +109,9 @@ export const updateWorkflow: WrappedHandler = createClientHandler(
   UpdateWorkflowSchema,
   async (input, client) => {
     // Cast to expected type - Zod validates structure, we cast for TypeScript
-    const updatedWorkflow = await client.updateWorkflow(
+    const updatedWorkflow = await client.workflows.update(
       String(input.id),
-      input.workflow as Parameters<typeof client.updateWorkflow>[1]
+      input.workflow as Parameters<typeof client.workflows.update>[1]
     );
 
     return createSuccessResponse(
@@ -129,7 +129,7 @@ export const updateWorkflow: WrappedHandler = createClientHandler(
 export const deleteWorkflow: WrappedHandler = createClientHandler(
   DeleteWorkflowSchema,
   async (input, client) => {
-    const workflow = await client.deleteWorkflow(String(input.id));
+    const workflow = await client.workflows.delete(String(input.id));
 
     return createSuccessResponse(
       `Successfully deleted workflow:\n${JSON.stringify(workflow, null, 2)}`
@@ -146,7 +146,7 @@ export const deleteWorkflow: WrappedHandler = createClientHandler(
 export const activateWorkflow: WrappedHandler = createClientHandler(
   ActivateWorkflowSchema,
   async (input, client) => {
-    const workflow = await client.activateWorkflow(String(input.id));
+    const workflow = await client.workflows.activate(String(input.id));
 
     return createSuccessResponse(
       `Successfully activated workflow:\n${JSON.stringify(workflow, null, 2)}`
@@ -163,7 +163,7 @@ export const activateWorkflow: WrappedHandler = createClientHandler(
 export const deactivateWorkflow: WrappedHandler = createClientHandler(
   DeactivateWorkflowSchema,
   async (input, client) => {
-    const workflow = await client.deactivateWorkflow(String(input.id));
+    const workflow = await client.workflows.deactivate(String(input.id));
 
     return createSuccessResponse(
       `Successfully deactivated workflow:\n${JSON.stringify(workflow, null, 2)}`
@@ -184,7 +184,7 @@ export const deactivateWorkflow: WrappedHandler = createClientHandler(
 export const executeWebhook: WrappedHandler = createClientHandler(
   ExecuteWebhookSchema,
   async (input, client) => {
-    const result = await client.executeWebhook(input.webhookPath, {
+    const result = await client.webhooks.execute(input.webhookPath, {
       method: input.method,
       data: input.data as Record<string, unknown> | undefined,
       headers: input.headers,
@@ -209,7 +209,8 @@ export const executeWebhook: WrappedHandler = createClientHandler(
 export const getWebhookUrl: WrappedHandler = createClientHandler(
   GetWebhookUrlSchema,
   async (input, client) => {
-    const webhookInfo = await client.getWebhookInfo(String(input.id));
+    const workflow = await client.workflows.get(String(input.id));
+    const webhookInfo = client.webhooks.getInfo(workflow);
 
     if (!webhookInfo) {
       return createSuccessResponse({

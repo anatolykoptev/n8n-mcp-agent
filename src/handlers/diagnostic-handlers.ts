@@ -140,7 +140,7 @@ export const diagnoseN8n: WrappedHandler = createClientHandler(
 
     // Check API connectivity
     try {
-      const workflows = await client.listWorkflows();
+      const workflows = await client.workflows.list();
       report.checks.api.latencyMs = Date.now() - startTime;
 
       // Analyze workflows
@@ -171,7 +171,7 @@ export const diagnoseN8n: WrappedHandler = createClientHandler(
       // Analyze recent executions
       if (input.includeExecutions) {
         try {
-          const executions = await client.getExecutions({ limit: 50 });
+          const executions = await client.executions.list({ limit: 50 });
           const recentExecs = executions.data;
           const failedExecs = recentExecs.filter(
             (e): e is typeof e & { status: 'error' } => e.status === 'error'
@@ -334,7 +334,7 @@ export const healthCheck: WrappedHandler = createClientHandler(
     };
 
     try {
-      const workflows = await client.listWorkflows();
+      const workflows = await client.workflows.list();
       const latency = Date.now() - startTime;
 
       result.healthy = true;

@@ -33,7 +33,7 @@ import {
 export const listVariables: WrappedHandler = createClientHandler(
   ListVariablesSchema,
   async (_input, client) => {
-    const variableList = await client.listVariables();
+    const variableList = await client.variables.list();
 
     // Format variables for cleaner output
     const formattedVariables = variableList.data.map((variable: N8nVariable) => ({
@@ -56,10 +56,10 @@ export const listVariables: WrappedHandler = createClientHandler(
 export const createVariable: WrappedHandler = createClientHandler(
   CreateVariableSchema,
   async (input, client) => {
-    const variable = await client.createVariable(input.key, input.value);
+    await client.variables.create(input.key, input.value);
 
     return createSuccessResponse(
-      `Successfully created variable:\n${JSON.stringify(variable, null, 2)}`
+      `Successfully created variable: ${input.key}`
     );
   }
 );
@@ -73,10 +73,10 @@ export const createVariable: WrappedHandler = createClientHandler(
 export const deleteVariable: WrappedHandler = createClientHandler(
   DeleteVariableSchema,
   async (input, client) => {
-    const variable = await client.deleteVariable(input.id);
+    await client.variables.delete(input.id);
 
     return createSuccessResponse(
-      `Successfully deleted variable:\n${JSON.stringify(variable, null, 2)}`
+      `Successfully deleted variable: ${input.id}`
     );
   }
 );

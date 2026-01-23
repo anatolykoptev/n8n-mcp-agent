@@ -28,7 +28,7 @@ import {
 export const generateAudit: WrappedHandler = createClientHandler(
   GenerateAuditSchema,
   async (input, client) => {
-    const auditResult = await client.generateAudit({
+    const auditResult = await client.audit.generate({
       categories: input.categories,
       daysAbandonedWorkflow: input.daysAbandonedWorkflow,
     });

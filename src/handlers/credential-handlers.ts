@@ -35,10 +35,10 @@ import {
 export const createCredential: WrappedHandler = createClientHandler(
   CreateCredentialSchema,
   async (input, client) => {
-    const credential = await client.createCredential(
+    const credential = await client.credentials.create(
       input.name,
       input.type,
-      input.data as Parameters<typeof client.createCredential>[2]
+      input.data as Parameters<typeof client.credentials.create>[2]
     );
 
     return createSuccessResponse(
@@ -56,7 +56,7 @@ export const createCredential: WrappedHandler = createClientHandler(
 export const deleteCredential: WrappedHandler = createClientHandler(
   DeleteCredentialSchema,
   async (input, client) => {
-    const credential = await client.deleteCredential(input.id);
+    const credential = await client.credentials.delete(input.id);
 
     return createSuccessResponse(
       `Successfully deleted credential:\n${JSON.stringify(credential, null, 2)}`
@@ -73,7 +73,7 @@ export const deleteCredential: WrappedHandler = createClientHandler(
 export const getCredentialSchema: WrappedHandler = createClientHandler(
   GetCredentialSchemaSchema,
   async (input, client) => {
-    const schema = await client.getCredentialSchema(input.credentialTypeName);
+    const schema = await client.credentials.getSchema(input.credentialTypeName);
 
     return createSuccessResponse(
       `Schema for credential type "${input.credentialTypeName}":\n${JSON.stringify(schema, null, 2)}`
