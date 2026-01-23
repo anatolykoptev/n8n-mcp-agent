@@ -36,6 +36,10 @@ lerna-debug.log*
 *.sublime-workspace
 *.sublime-project
 
+# AI tools
+.krolik/
+CLAUDE.md
+
 # OS
 .DS_Store
 .DS_Store?

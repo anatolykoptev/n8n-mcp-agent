@@ -1,29 +1,31 @@
 {
-  "name": "@anatolykoptev/n8n-mcp-server",
-  "description": "MCP server for n8n workflow automation with 4343+ workflow templates from Zie619 database",
-  "version": "1.1.0",
+  "name": "@anatolykoptev/n8n-mcp-agent",
+  "description": "Autonomous AI agent for n8n workflow automation with credential factories, execution helpers, 4343+ workflow templates, and specialized sub-agents",
+  "version": "2.0.0",
   "type": "module",
   "bin": {
-    "n8n-mcp-server": "build/index.js"
+    "n8n-mcp-agent": "build/main.js"
   },
   "files": [
     "build",
+    "agents",
+    "skills",
     "README.md",
     "LICENSE"
   ],
   "license": "MIT",
-  "author": "Anatoly Koptev (fork of Illuminare Solutions)",
+  "author": "Anatoly Koptev",
   "publishConfig": {
     "access": "public"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/anatolykoptev/n8n-mcp-server.git"
+    "url": "git+https://github.com/anatolykoptev/n8n-mcp-agent.git"
   },
   "bugs": {
-    "url": "https://github.com/anatolykoptev/n8n-mcp-server/issues"
+    "url": "https://github.com/anatolykoptev/n8n-mcp-agent/issues"
   },
-  "homepage": "https://github.com/anatolykoptev/n8n-mcp-server#readme",
+  "homepage": "https://github.com/anatolykoptev/n8n-mcp-agent#readme",
   "engines": {
     "node": ">=18.0.0"
   },
@@ -32,26 +34,34 @@
     "mcp",
     "automation",
     "workflow",
+    "ai-agent",
+    "autonomous",
     "llm",
-    "ai",
     "claude",
     "modelcontextprotocol",
-    "workflow-templates"
+    "workflow-templates",
+    "credential-management"
   ],
   "scripts": {
-    "build": "tsc && chmod +x build/index.js",
-    "start": "node build/index.js",
+    "build": "tsc && chmod +x build/main.js",
+    "start": "node build/main.js",
     "prepublishOnly": "npm run build",
     "clean": "rm -rf build",
-    "lint": "tsc --noEmit"
+    "lint": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^0.7.0",
-    "zod": "^3.22.4",
-    "node-fetch": "^3.3.2"
+    "@modelcontextprotocol/sdk": "^1.25.3",
+    "dotenv": "^17.2.3",
+    "node-fetch": "^3.3.2",
+    "zod": "^3.25.76"
   },
   "devDependencies": {
-    "@types/node": "^20.11.5",
-    "typescript": "^5.3.3"
+    "@types/node": "^25.0.10",
+    "@vitest/coverage-v8": "^4.0.18",
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.18"
   }
 }
