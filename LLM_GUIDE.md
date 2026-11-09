@@ -180,7 +180,7 @@ Programmatically assemble prompts for LLMs using [GenAIScript](https://microsoft
 * Expose MCP functionality to Goose through tools.
 * MCPs can be installed directly via the [extensions directory](https://block.github.io/goose/v1/extensions/), CLI, or UI.
 * Goose allows you to extend its functionality by [building your own MCP servers](https://block.github.io/goose/docs/tutorials/custom-extensions).
-* Includes built-in tools for development, web scraping, automation, memory, and integrations with JetBrains and Google Drive.
+* Includes built-in tools for development, web data extraction, automation, memory, and integrations with JetBrains and Google Drive.
 
 ### LibreChat
 
@@ -2963,7 +2963,7 @@ These official reference servers demonstrate core MCP features and SDK usage:
 
 * **[Brave Search](https://github.com/modelcontextprotocol/servers/tree/main/src/brave-search)** - Web and local search using Brave's Search API
 * **[Fetch](https://github.com/modelcontextprotocol/servers/tree/main/src/fetch)** - Web content fetching and conversion optimized for LLM usage
-* **[Puppeteer](https://github.com/modelcontextprotocol/servers/tree/main/src/puppeteer)** - Browser automation and web scraping capabilities
+* **[Puppeteer](https://github.com/modelcontextprotocol/servers/tree/main/src/puppeteer)** - Browser automation and web data extraction capabilities
 
 ### Productivity and communication
 

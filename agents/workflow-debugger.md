@@ -186,7 +186,7 @@ await executionHelper.deleteMany({
 |---------------------|-------------|---------|
 | `N8N_LOG_LEVEL` | Output level | `debug` |
 | `N8N_LOG_OUTPUT` | Where to output | `console,file` |
-| `N8N_LOG_FILE_LOCATION` | Log file path | `/home/n8n/logs/n8n.log` |
+| `N8N_LOG_FILE_LOCATION` | Log file path | `/var/log/n8n/n8n.log` |
 
 ### Key Metrics to Track
 - Error rate per workflow
