@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Krolik Creds Server - Universal Local Secure Storage
+ * Local Creds Server - Universal Local Secure Storage
  *
  * A universal encrypted credential storage for local applications.
  * Currently used by n8n-mcp extension, but designed for future expansion.
@@ -37,10 +37,10 @@ const PORT = parseInt(process.argv[2]) || 19847;
 const MAX_BODY_SIZE = 1024 * 1024; // 1MB limit
 
 // Universal secure storage in user's home directory
-const KROLIK_CREDS_DIR = path.join(os.homedir(), '.krolik', 'creds');
-const STORAGE_FILE = path.join(KROLIK_CREDS_DIR, 'n8n.json');
-const SECRET_FILE = path.join(KROLIK_CREDS_DIR, '.auth-secret');
-const SALT_FILE = path.join(KROLIK_CREDS_DIR, '.encryption-salt');
+const CREDS_DIR = path.join(os.homedir(), '.krolik', 'creds');
+const STORAGE_FILE = path.join(CREDS_DIR, 'n8n.json');
+const SECRET_FILE = path.join(CREDS_DIR, '.auth-secret');
+const SALT_FILE = path.join(CREDS_DIR, '.encryption-salt');
 
 // Rate limiting
 const rateLimitMap = new Map();
@@ -49,8 +49,8 @@ const RATE_LIMIT_MAX_REQUESTS = 100; // 100 requests per minute
 
 // Ensure directory exists
 function ensureDir() {
-  if (!fs.existsSync(KROLIK_CREDS_DIR)) {
-    fs.mkdirSync(KROLIK_CREDS_DIR, { recursive: true, mode: 0o700 });
+  if (!fs.existsSync(CREDS_DIR)) {
+    fs.mkdirSync(CREDS_DIR, { recursive: true, mode: 0o700 });
   }
 }
 
@@ -506,7 +506,7 @@ function readBody(req) {
 // =============================================================================
 
 server.listen(PORT, '127.0.0.1', () => {
-  console.log(`Krolik Creds Server running at http://127.0.0.1:${PORT}`);
+  console.log(`Local Creds Server running at http://127.0.0.1:${PORT}`);
   console.log('');
   console.log('Security:');
   console.log('  ✓ Local-only storage (credentials never leave machine)');
@@ -517,7 +517,7 @@ server.listen(PORT, '127.0.0.1', () => {
   console.log('  ✓ Rate limiting (100 req/min)');
   console.log('  ✓ Request body size limit (1MB)');
   console.log('');
-  console.log(`Storage: ${KROLIK_CREDS_DIR}`);
+  console.log(`Storage: ${CREDS_DIR}`);
   console.log(`  n8n.json - n8n credentials (encrypted)`);
   console.log('');
   console.log('Endpoints (n8n):');
