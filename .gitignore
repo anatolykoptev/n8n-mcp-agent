@@ -38,7 +38,6 @@ lerna-debug.log*
 
 # AI tools
 .krolik/
-CLAUDE.md
 
 # OS
 .DS_Store

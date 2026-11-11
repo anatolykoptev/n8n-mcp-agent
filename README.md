@@ -98,6 +98,15 @@ The server auto-connects when these environment variables are set:
 | `N8N_URL` | Your n8n instance URL (e.g., `https://n8n.example.com`) |
 | `N8N_API_KEY` | Your n8n API key |
 
+Optional flags choose which tools are registered. With none set, the 35 core tools are
+available; the Enterprise and user-management tools are off by default.
+
+| Variable | Effect when `true` |
+|----------|--------------------|
+| `N8N_ENTERPRISE` | enable the project and variable tools (n8n Enterprise) |
+| `N8N_USERS` | enable the user-management tools |
+| `N8N_FULL` | enable every tool (46 in total) |
+
 ## MCP Tools
 
 ### Workflow Management (8 tools)
@@ -275,6 +284,18 @@ If you get an error:
    - Use HTTPS for production
    - Enable n8n authentication
    - Keep n8n updated
+
+## Development
+
+```bash
+npm install
+npm run lint      # tsc --noEmit
+npm test          # vitest run
+npm run build     # tsc, writes build/
+```
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) and [DEVELOPMENT.md](DEVELOPMENT.md); all
+documents are listed in [docs/INDEX.md](docs/INDEX.md).
 
 ## Support
 
